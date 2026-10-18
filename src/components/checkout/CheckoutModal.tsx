@@ -132,8 +132,14 @@ export const CheckoutModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-brand-border my-auto">
+    <div 
+      onClick={() => setIsCheckoutOpen(false)}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-brand-border my-auto"
+      >
         {/* Header with Steps */}
         <div className="px-5 py-4 border-b border-brand-border bg-brand-bg flex items-center justify-between">
           <div className="flex items-center gap-3">

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Product, 
   CartItem, 
@@ -18,6 +18,11 @@ import {
   INITIAL_SETTINGS, 
   INITIAL_ORDERS 
 } from '../data/mockData';
+import { 
+  parseNavFromQuery, 
+  serializeNavToQuery, 
+  NavigationParams 
+} from '../utils/navigation';
 
 export interface ToastMessage {
   id: string;
@@ -26,6 +31,9 @@ export interface ToastMessage {
 }
 
 interface StoreContextType {
+  // Navigation
+  navigateBack: () => void;
+
   // Products
   products: Product[];
   addProduct: (product: Omit<Product, 'id'>) => void;
@@ -159,7 +167,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return [];
     }
   });
-  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // 3. Orders
   const [orders, setOrders] = useState<Order[]>(() => {
@@ -211,15 +218,473 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : { address: 'DLF Phase 1, Sector 28', pincode: '122002' };
   });
 
-  // 9. Navigation & Modals UI state
-  const [activeView, setActiveView] = useState<'store' | 'admin'>('store');
-  const [selectedCategory, setSelectedCategory] = useState<CategoryId | 'all'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProductForDetail, setSelectedProductForDetail] = useState<Product | null>(null);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  // 9. Navigation & Modals UI state (initialized synchronously from URL query parameters)
+  const initialNav = useRef(parseNavFromQuery(window.location.search)).current;
+
+  const [activeView, setActiveViewState] = useState<'store' | 'admin'>(initialNav.view);
+  const [selectedCategory, setSelectedCategoryState] = useState<CategoryId | 'all'>(initialNav.category);
+  const [searchQuery, setSearchQueryState] = useState(initialNav.q);
+  const [selectedProductForDetail, setSelectedProductForDetailState] = useState<Product | null>(() => {
+    if (initialNav.productId) {
+      return products.find((p) => p.id === initialNav.productId) || null;
+    }
+    return null;
+  });
+  const [isCartOpen, setIsCartOpenState] = useState(initialNav.cart);
+  const [isCheckoutOpen, setIsCheckoutOpenState] = useState(initialNav.checkout);
+  const [trackingOrderId, setTrackingOrderIdState] = useState<string | null>(initialNav.trackingId);
+  const [isLocationModalOpen, setIsLocationModalOpenState] = useState(initialNav.location);
   const [lastPlacedOrder, setLastPlacedOrder] = useState<Order | null>(null);
+
+  // References to prevent feedback loops and race conditions during popstate
+  const isPopNavRef = useRef(false);
+  const navIndexRef = useRef(window.history.state?.gks_nav || 0);
+  const searchQueryRef = useRef(searchQuery);
+  searchQueryRef.current = searchQuery;
+  const productsRef = useRef(products);
+  productsRef.current = products;
+
+  // Snapshot of current navigation parameters
+  const getCurrentParams = useCallback((): NavigationParams => {
+    return {
+      view: activeView,
+      category: selectedCategory,
+      q: searchQuery,
+      productId: selectedProductForDetail?.id || null,
+      cart: isCartOpen,
+      checkout: isCheckoutOpen,
+      trackingId: trackingOrderId,
+      location: isLocationModalOpen,
+    };
+  }, [
+    activeView,
+    selectedCategory,
+    searchQuery,
+    selectedProductForDetail,
+    isCartOpen,
+    isCheckoutOpen,
+    trackingOrderId,
+    isLocationModalOpen,
+  ]);
+
+  // Initial history stack setup: ensure base Home exists so Back doesn't immediately exit
+  useEffect(() => {
+    const isSubRoute =
+      Boolean(initialNav.productId) ||
+      initialNav.cart ||
+      initialNav.checkout ||
+      Boolean(initialNav.trackingId) ||
+      initialNav.location ||
+      initialNav.category !== 'all' ||
+      Boolean(initialNav.q) ||
+      initialNav.view === 'admin';
+
+    if (isSubRoute && (!window.history.state || typeof window.history.state.gks_nav !== 'number')) {
+      // Direct landing on sub-route (e.g. WhatsApp product link or page refresh)
+      // 1. Establish Home as base history entry (index 0)
+      window.history.replaceState(
+        { gks_nav: 0, isRoot: true, view: 'store', category: 'all', q: '' },
+        '',
+        window.location.pathname
+      );
+      // 2. Push landing state on top (index 1) so pressing Back gracefully returns to Home!
+      navIndexRef.current = 1;
+      const subUrl = serializeNavToQuery(initialNav);
+      window.history.pushState(
+        { ...initialNav, gks_nav: 1 },
+        '',
+        subUrl
+      );
+    } else if (!window.history.state || typeof window.history.state.gks_nav !== 'number') {
+      window.history.replaceState(
+        { gks_nav: 0, isRoot: true, ...initialNav },
+        '',
+        window.location.pathname
+      );
+    }
+  }, []);
+
+  // Popstate event handler for Android Back button, gestures, and browser back/forward
+  useEffect(() => {
+    const onPopState = (e: PopStateEvent) => {
+      isPopNavRef.current = true;
+      const params = parseNavFromQuery(window.location.search);
+      navIndexRef.current = e.state?.gks_nav || 0;
+
+      setActiveViewState(params.view);
+      setSelectedCategoryState(params.category);
+      setSearchQueryState(params.q);
+      searchQueryRef.current = params.q;
+
+      if (params.productId) {
+        const found = productsRef.current.find((p) => p.id === params.productId) || null;
+        setSelectedProductForDetailState(found);
+      } else {
+        setSelectedProductForDetailState(null);
+      }
+
+      setIsCartOpenState(params.cart);
+      setIsCheckoutOpenState(params.checkout);
+      setTrackingOrderIdState(params.trackingId);
+      setIsLocationModalOpenState(params.location);
+
+      // Restore scroll position if saved
+      if (
+        e.state?.scrollY !== undefined &&
+        !params.productId &&
+        !params.cart &&
+        !params.checkout
+      ) {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: e.state.scrollY, behavior: 'instant' });
+        });
+      }
+
+      setTimeout(() => {
+        isPopNavRef.current = false;
+      }, 50);
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, []);
+
+  // Desktop Escape key support to dismiss open drawers/modals via browser history
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (
+          isCartOpen ||
+          selectedProductForDetail ||
+          isCheckoutOpen ||
+          trackingOrderId ||
+          isLocationModalOpen
+        ) {
+          e.preventDefault();
+          window.history.back();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    isCartOpen,
+    selectedProductForDetail,
+    isCheckoutOpen,
+    trackingOrderId,
+    isLocationModalOpen,
+  ]);
+
+  // Synchronized navigation setters
+  const setSelectedProductForDetail = useCallback((product: Product | null) => {
+    if (isPopNavRef.current) {
+      setSelectedProductForDetailState(product);
+      return;
+    }
+
+    if (product) {
+      setSelectedProductForDetailState(product);
+      const nextParams: NavigationParams = {
+        ...getCurrentParams(),
+        productId: product.id,
+      };
+      navIndexRef.current += 1;
+      window.history.pushState(
+        { ...nextParams, gks_nav: navIndexRef.current, scrollY: window.scrollY },
+        '',
+        serializeNavToQuery(nextParams)
+      );
+    } else {
+      setSelectedProductForDetailState(null);
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.has('product')) {
+        if (navIndexRef.current > 0) {
+          window.history.back();
+        } else {
+          const nextParams: NavigationParams = { ...getCurrentParams(), productId: null };
+          window.history.replaceState(
+            { ...nextParams, gks_nav: 0 },
+            '',
+            serializeNavToQuery(nextParams)
+          );
+        }
+      }
+    }
+  }, [getCurrentParams]);
+
+  const setIsCartOpen = useCallback((open: boolean) => {
+    if (isPopNavRef.current) {
+      setIsCartOpenState(open);
+      return;
+    }
+
+    if (open) {
+      setIsCartOpenState(true);
+      const nextParams: NavigationParams = {
+        ...getCurrentParams(),
+        cart: true,
+      };
+      navIndexRef.current += 1;
+      window.history.pushState(
+        { ...nextParams, gks_nav: navIndexRef.current, scrollY: window.scrollY },
+        '',
+        serializeNavToQuery(nextParams)
+      );
+    } else {
+      setIsCartOpenState(false);
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.has('cart')) {
+        if (navIndexRef.current > 0) {
+          window.history.back();
+        } else {
+          const nextParams: NavigationParams = { ...getCurrentParams(), cart: false };
+          window.history.replaceState(
+            { ...nextParams, gks_nav: 0 },
+            '',
+            serializeNavToQuery(nextParams)
+          );
+        }
+      }
+    }
+  }, [getCurrentParams]);
+
+  const setIsCheckoutOpen = useCallback((open: boolean) => {
+    if (isPopNavRef.current) {
+      setIsCheckoutOpenState(open);
+      return;
+    }
+
+    if (open) {
+      setIsCheckoutOpenState(true);
+      const nextParams: NavigationParams = {
+        ...getCurrentParams(),
+        cart: false,
+        checkout: true,
+      };
+      navIndexRef.current += 1;
+      window.history.pushState(
+        { ...nextParams, gks_nav: navIndexRef.current },
+        '',
+        serializeNavToQuery(nextParams)
+      );
+    } else {
+      setIsCheckoutOpenState(false);
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.has('checkout')) {
+        if (navIndexRef.current > 0) {
+          window.history.back();
+        } else {
+          const nextParams: NavigationParams = { ...getCurrentParams(), checkout: false };
+          window.history.replaceState(
+            { ...nextParams, gks_nav: 0 },
+            '',
+            serializeNavToQuery(nextParams)
+          );
+        }
+      }
+    }
+  }, [getCurrentParams]);
+
+  const setTrackingOrderId = useCallback((orderId: string | null) => {
+    if (isPopNavRef.current) {
+      setTrackingOrderIdState(orderId);
+      return;
+    }
+
+    if (orderId) {
+      setTrackingOrderIdState(orderId);
+      const nextParams: NavigationParams = {
+        ...getCurrentParams(),
+        trackingId: orderId,
+      };
+      navIndexRef.current += 1;
+      window.history.pushState(
+        { ...nextParams, gks_nav: navIndexRef.current },
+        '',
+        serializeNavToQuery(nextParams)
+      );
+    } else {
+      setTrackingOrderIdState(null);
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.has('tracking')) {
+        if (navIndexRef.current > 0) {
+          window.history.back();
+        } else {
+          const nextParams: NavigationParams = { ...getCurrentParams(), trackingId: null };
+          window.history.replaceState(
+            { ...nextParams, gks_nav: 0 },
+            '',
+            serializeNavToQuery(nextParams)
+          );
+        }
+      }
+    }
+  }, [getCurrentParams]);
+
+  const setIsLocationModalOpen = useCallback((open: boolean) => {
+    if (isPopNavRef.current) {
+      setIsLocationModalOpenState(open);
+      return;
+    }
+
+    if (open) {
+      setIsLocationModalOpenState(true);
+      const nextParams: NavigationParams = {
+        ...getCurrentParams(),
+        location: true,
+      };
+      navIndexRef.current += 1;
+      window.history.pushState(
+        { ...nextParams, gks_nav: navIndexRef.current },
+        '',
+        serializeNavToQuery(nextParams)
+      );
+    } else {
+      setIsLocationModalOpenState(false);
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.has('location')) {
+        if (navIndexRef.current > 0) {
+          window.history.back();
+        } else {
+          const nextParams: NavigationParams = { ...getCurrentParams(), location: false };
+          window.history.replaceState(
+            { ...nextParams, gks_nav: 0 },
+            '',
+            serializeNavToQuery(nextParams)
+          );
+        }
+      }
+    }
+  }, [getCurrentParams]);
+
+  const setSelectedCategory = useCallback((category: CategoryId | 'all') => {
+    if (isPopNavRef.current) {
+      setSelectedCategoryState(category);
+      return;
+    }
+
+    if (category === selectedCategory) return;
+
+    setSelectedCategoryState(category);
+    setSelectedProductForDetailState(null);
+    setSearchQueryState('');
+    searchQueryRef.current = '';
+
+    const nextParams: NavigationParams = {
+      ...getCurrentParams(),
+      category,
+      q: '',
+      productId: null,
+      view: 'store',
+    };
+    navIndexRef.current += 1;
+    window.history.pushState(
+      { ...nextParams, gks_nav: navIndexRef.current, scrollY: window.scrollY },
+      '',
+      serializeNavToQuery(nextParams)
+    );
+  }, [selectedCategory, getCurrentParams]);
+
+  const setSearchQuery = useCallback((query: string) => {
+    if (isPopNavRef.current) {
+      setSearchQueryState(query);
+      return;
+    }
+
+    const prevQuery = searchQueryRef.current;
+    setSearchQueryState(query);
+    searchQueryRef.current = query;
+
+    const trimmed = query.trim();
+    const prevTrimmed = prevQuery.trim();
+
+    if (!prevTrimmed && trimmed) {
+      // First keystroke starting a search: push history
+      const nextParams: NavigationParams = {
+        ...getCurrentParams(),
+        q: query,
+        productId: null,
+      };
+      navIndexRef.current += 1;
+      window.history.pushState(
+        { ...nextParams, gks_nav: navIndexRef.current, scrollY: window.scrollY },
+        '',
+        serializeNavToQuery(nextParams)
+      );
+    } else if (trimmed) {
+      // Continuous typing: replace history state to avoid clutter
+      const nextParams: NavigationParams = {
+        ...getCurrentParams(),
+        q: query,
+      };
+      window.history.replaceState(
+        { ...nextParams, gks_nav: navIndexRef.current },
+        '',
+        serializeNavToQuery(nextParams)
+      );
+    } else if (!trimmed && prevTrimmed) {
+      // Cleared search query
+      const nextParams: NavigationParams = {
+        ...getCurrentParams(),
+        q: '',
+      };
+      window.history.replaceState(
+        { ...nextParams, gks_nav: navIndexRef.current },
+        '',
+        serializeNavToQuery(nextParams)
+      );
+    }
+  }, [getCurrentParams]);
+
+  const setActiveView = useCallback((view: 'store' | 'admin') => {
+    if (isPopNavRef.current) {
+      setActiveViewState(view);
+      return;
+    }
+
+    if (view === activeView) return;
+
+    setActiveViewState(view);
+    const nextParams: NavigationParams = {
+      ...getCurrentParams(),
+      view,
+      cart: false,
+      checkout: false,
+      trackingId: null,
+      location: false,
+    };
+    navIndexRef.current += 1;
+    window.history.pushState(
+      { ...nextParams, gks_nav: navIndexRef.current, scrollY: window.scrollY },
+      '',
+      serializeNavToQuery(nextParams)
+    );
+  }, [activeView, getCurrentParams]);
+
+  const navigateBack = useCallback(() => {
+    if (window.history.length > 1 && navIndexRef.current > 0) {
+      window.history.back();
+    } else {
+      // Fallback directly to Home
+      setActiveViewState('store');
+      setSelectedCategoryState('all');
+      setSearchQueryState('');
+      searchQueryRef.current = '';
+      setSelectedProductForDetailState(null);
+      setIsCartOpenState(false);
+      setIsCheckoutOpenState(false);
+      setTrackingOrderIdState(null);
+      setIsLocationModalOpenState(false);
+      navIndexRef.current = 0;
+      window.history.replaceState(
+        { gks_nav: 0, isRoot: true, view: 'store', category: 'all', q: '' },
+        '',
+        window.location.pathname
+      );
+    }
+  }, []);
 
   // 10. Toasts
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -800,6 +1265,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         deliveryLocation,
         setDeliveryLocation,
         isPincodeServiceable,
+        navigateBack,
         activeView,
         setActiveView,
         selectedCategory,

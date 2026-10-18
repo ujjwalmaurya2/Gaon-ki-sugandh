@@ -51,8 +51,14 @@ export const OrderTrackingModal: React.FC = () => {
   const currentStepIndex = getStepIndex(currentOrder.status);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-brand-border my-auto">
+    <div 
+      onClick={() => setTrackingOrderId(null)}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-fade-in"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-brand-border my-auto"
+      >
         {/* Header */}
         <div className="px-5 py-4 border-b border-brand-border bg-brand-green text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">

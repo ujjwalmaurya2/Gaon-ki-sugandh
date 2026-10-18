@@ -50,8 +50,14 @@ export const LocationModal: React.FC = () => {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-brand-border">
+    <div 
+      onClick={() => setIsLocationModalOpen(false)}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-brand-border"
+      >
         {/* Header */}
         <div className="px-5 py-4 border-b border-brand-border flex items-center justify-between bg-brand-bg">
           <div className="flex items-center gap-2">
