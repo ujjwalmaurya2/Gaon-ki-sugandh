@@ -31,7 +31,8 @@ export const CheckoutModal: React.FC = () => {
     isPincodeServiceable,
     createOrder,
     showToast,
-    setTrackingOrderId
+    setTrackingOrderId,
+    completeOrderAndTrack
   } = useStore();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -111,8 +112,6 @@ export const CheckoutModal: React.FC = () => {
       setIsSubmitting(false);
 
       if (placed) {
-        setIsCheckoutOpen(false);
-
         // Fire festive confetti
         try {
           confetti({
@@ -125,8 +124,8 @@ export const CheckoutModal: React.FC = () => {
           // ignore if canvas not supported
         }
 
-        // Open live order tracking
-        setTrackingOrderId(placed.id);
+        // Open live order tracking cleanly without history collision
+        completeOrderAndTrack(placed.id);
       }
     }, 600);
   };
@@ -143,10 +142,19 @@ export const CheckoutModal: React.FC = () => {
         {/* Header with Steps */}
         <div className="px-5 py-4 border-b border-brand-border bg-brand-bg flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {step > 1 && (
+            {step > 1 ? (
               <button
                 onClick={() => setStep((prev) => (prev - 1) as any)}
-                className="w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center text-brand-muted"
+                className="w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center text-brand-muted transition-colors"
+                title="Previous step"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsCheckoutOpen(false)}
+                className="w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center text-brand-muted transition-colors"
+                title="Back to Cart"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>

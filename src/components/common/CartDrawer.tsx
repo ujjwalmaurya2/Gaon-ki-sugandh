@@ -30,7 +30,8 @@ export const CartDrawer: React.FC = () => {
     applyCoupon,
     removeCoupon,
     coupons,
-    setIsCheckoutOpen
+    setIsCheckoutOpen,
+    proceedToCheckout
   } = useStore();
 
   const [couponInput, setCouponInput] = useState('');
@@ -86,8 +87,7 @@ export const CartDrawer: React.FC = () => {
       setCouponError(`Minimum order value is ₹${settings.minimumOrderValue}`);
       return;
     }
-    setIsCartOpen(false);
-    setIsCheckoutOpen(true);
+    proceedToCheckout();
   };
 
   return (

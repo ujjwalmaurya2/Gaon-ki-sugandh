@@ -98,6 +98,8 @@ interface StoreContextType {
   setSelectedProductForDetail: (p: Product | null) => void;
   isCheckoutOpen: boolean;
   setIsCheckoutOpen: (open: boolean) => void;
+  proceedToCheckout: () => void;
+  completeOrderAndTrack: (orderId: string) => void;
   trackingOrderId: string | null;
   setTrackingOrderId: (id: string | null) => void;
   isLocationModalOpen: boolean;
@@ -243,6 +245,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   searchQueryRef.current = searchQuery;
   const productsRef = useRef(products);
   productsRef.current = products;
+  const cartRef = useRef(cart);
+  cartRef.current = cart;
 
   // Snapshot of current navigation parameters
   const getCurrentParams = useCallback((): NavigationParams => {
@@ -323,7 +327,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setSelectedProductForDetailState(null);
       }
 
-      setIsCartOpenState(params.cart);
+      if (params.cart && cartRef.current.length === 0) {
+        setIsCartOpenState(false);
+      } else {
+        setIsCartOpenState(params.cart);
+      }
       setIsCheckoutOpenState(params.checkout);
       setTrackingOrderIdState(params.trackingId);
       setIsLocationModalOpenState(params.location);
@@ -435,7 +443,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else {
       setIsCartOpenState(false);
       const sp = new URLSearchParams(window.location.search);
-      if (sp.has('cart')) {
+      // Safety: Only pop history if cart query exists AND we are not transitioning to checkout or tracking
+      if (sp.has('cart') && !sp.has('checkout') && !sp.has('tracking')) {
         if (navIndexRef.current > 0) {
           window.history.back();
         } else {
@@ -457,6 +466,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     if (open) {
+      setIsCartOpenState(false);
       setIsCheckoutOpenState(true);
       const nextParams: NavigationParams = {
         ...getCurrentParams(),
@@ -472,7 +482,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else {
       setIsCheckoutOpenState(false);
       const sp = new URLSearchParams(window.location.search);
-      if (sp.has('checkout')) {
+      // Safety: Only pop history if checkout query exists AND we are not transitioning to tracking
+      if (sp.has('checkout') && !sp.has('tracking')) {
         if (navIndexRef.current > 0) {
           window.history.back();
         } else {
@@ -487,6 +498,55 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [getCurrentParams]);
 
+  // Direct, atomic transition from Cart to Checkout without history.back() race conditions
+  const proceedToCheckout = useCallback(() => {
+    if (isPopNavRef.current) {
+      setIsCartOpenState(false);
+      setIsCheckoutOpenState(true);
+      return;
+    }
+
+    setIsCartOpenState(false);
+    setIsCheckoutOpenState(true);
+    const nextParams: NavigationParams = {
+      ...getCurrentParams(),
+      cart: false,
+      checkout: true,
+    };
+    navIndexRef.current += 1;
+    window.history.pushState(
+      { ...nextParams, gks_nav: navIndexRef.current },
+      '',
+      serializeNavToQuery(nextParams)
+    );
+  }, [getCurrentParams]);
+
+  // Direct, atomic transition from Checkout to Live Order Tracking
+  const completeOrderAndTrack = useCallback((orderId: string) => {
+    if (isPopNavRef.current) {
+      setIsCheckoutOpenState(false);
+      setIsCartOpenState(false);
+      setTrackingOrderIdState(orderId);
+      return;
+    }
+
+    setIsCheckoutOpenState(false);
+    setIsCartOpenState(false);
+    setTrackingOrderIdState(orderId);
+    const nextParams: NavigationParams = {
+      ...getCurrentParams(),
+      cart: false,
+      checkout: false,
+      trackingId: orderId,
+    };
+    navIndexRef.current = 0;
+    window.history.replaceState(
+      { ...nextParams, gks_nav: 0 },
+      '',
+      serializeNavToQuery(nextParams)
+    );
+  }, [getCurrentParams]);
+
   const setTrackingOrderId = useCallback((orderId: string | null) => {
     if (isPopNavRef.current) {
       setTrackingOrderIdState(orderId);
@@ -494,9 +554,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     if (orderId) {
+      setIsCheckoutOpenState(false);
+      setIsCartOpenState(false);
       setTrackingOrderIdState(orderId);
       const nextParams: NavigationParams = {
         ...getCurrentParams(),
+        cart: false,
+        checkout: false,
         trackingId: orderId,
       };
       navIndexRef.current += 1;
@@ -1276,6 +1340,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setSelectedProductForDetail,
         isCheckoutOpen,
         setIsCheckoutOpen,
+        proceedToCheckout,
+        completeOrderAndTrack,
         trackingOrderId,
         setTrackingOrderId,
         isLocationModalOpen,
