@@ -35,8 +35,13 @@ export const BottomNav: React.FC = () => {
         onClick={() => {
           setActiveView('store');
           // Scroll to category strip
-          const el = document.getElementById('category-scroll-section');
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
+          const mobileEl = document.getElementById('mobile-category-scroll-section');
+          const desktopEl = document.getElementById('category-scroll-section');
+          if (mobileEl) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else if (desktopEl) {
+            desktopEl.scrollIntoView({ behavior: 'smooth' });
+          }
         }}
         className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-brand-muted hover:text-brand-green transition-colors"
       >

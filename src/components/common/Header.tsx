@@ -11,6 +11,7 @@ import {
   X,
   PackageCheck
 } from 'lucide-react';
+import { MobileCategoryScroll } from '../store/CategoryScroll';
 
 export const Header: React.FC = () => {
   const { 
@@ -31,18 +32,18 @@ export const Header: React.FC = () => {
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-brand-border shadow-sm">
       {/* Top Banner ticker */}
-      <div className="bg-brand-yellow px-4 py-1.5 text-xs text-brand-dark font-medium flex items-center justify-between overflow-hidden">
-        <div className="flex items-center gap-2 mx-auto">
-          <span className="inline-block px-1.5 py-0.2 bg-brand-green text-white text-[10px] font-bold rounded">
+      <div className="bg-brand-yellow px-3 sm:px-4 py-1 text-xs text-brand-dark font-medium flex items-center justify-between gap-2 overflow-hidden">
+        <div className="flex items-center gap-1.5 sm:gap-2 mx-auto min-w-0 truncate">
+          <span className="inline-block px-1.5 py-0.2 bg-brand-green text-white text-[10px] font-bold rounded shrink-0">
             DEMO MODE
           </span>
-          <span className="hidden sm:inline font-semibold">Gaon Ki Sugandh:</span>
-          <span>{settings.tagline}</span>
-          <span className="hidden md:inline text-brand-greenDark font-bold">• Use code <span className="underline">{settings.promoBannerCode}</span> for ₹50 off!</span>
+          <span className="hidden sm:inline font-semibold shrink-0">Gaon Ki Sugandh:</span>
+          <span className="truncate">{settings.tagline}</span>
+          <span className="hidden md:inline text-brand-greenDark font-bold shrink-0">• Use code <span className="underline">{settings.promoBannerCode}</span> for ₹50 off!</span>
         </div>
         <button
           onClick={() => setActiveView(activeView === 'store' ? 'admin' : 'store')}
-          className="text-[11px] font-bold text-brand-greenDark hover:text-black flex items-center gap-1 bg-white/70 px-2 py-0.5 rounded-full border border-brand-green/30 transition-all shrink-0"
+          className="text-[10px] sm:text-[11px] font-bold text-brand-greenDark hover:text-black flex items-center gap-1 bg-white/70 px-2 py-0.5 rounded-full border border-brand-green/30 transition-all shrink-0"
         >
           {activeView === 'store' ? '⚡ Open Admin Panel' : '🛒 View Storefront'}
         </button>
@@ -170,7 +171,7 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Mobile Search Row (Always visible beneath header on small screens) */}
-      <div className="md:hidden px-3 pb-2.5 pt-0.5">
+      <div className="md:hidden px-3 pb-1.5 pt-0.5">
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
           <input
@@ -178,18 +179,25 @@ export const Header: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder='Search "mustard oil", "atta", "dal", "ghee"...'
-            className="w-full pl-9 pr-8 py-2 bg-brand-bg focus:bg-white border border-brand-border focus:border-brand-green rounded-xl text-xs sm:text-sm font-medium text-brand-dark placeholder:text-brand-lightMuted outline-none transition-all shadow-sm"
+            className="w-full pl-9 pr-8 py-2 bg-brand-bg focus:bg-white border border-brand-border focus:border-brand-green rounded-xl text-xs sm:text-sm font-medium text-brand-dark placeholder:text-brand-lightMuted outline-none transition-all shadow-xs"
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-muted hover:text-brand-dark"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-muted hover:text-brand-dark p-0.5"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
       </div>
+
+      {/* Mobile Sticky Category Navigation Strip (Sticky with Header on Mobile) */}
+      {activeView === 'store' && (
+        <div className="md:hidden">
+          <MobileCategoryScroll />
+        </div>
+      )}
     </header>
   );
 };

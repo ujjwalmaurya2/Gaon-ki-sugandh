@@ -85,8 +85,10 @@ export const StoreView: React.FC = () => {
       {/* 1. Blinkit Green & Yellow Hero Banner */}
       <HeroBanner />
 
-      {/* 2. Horizontal Category Strip with Animated AI Graphics */}
-      <CategoryScroll />
+      {/* 2. Horizontal Category Strip with Animated AI Graphics (Desktop & Tablet) */}
+      <div className="hidden md:block">
+        <CategoryScroll />
+      </div>
 
       {/* 3. Dedicated Active Category Spotlight Banner (when filtered) */}
       {activeCategoryInfo && !searchQuery && (

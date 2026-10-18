@@ -6,7 +6,7 @@ export const HeroBanner: React.FC = () => {
   const { settings, setSelectedCategory, applyCoupon } = useStore();
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-3 pb-2">
+    <div className="hidden md:block max-w-7xl mx-auto px-3 sm:px-6 pt-3 pb-2">
       {/* Main Promo Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Main Big Feature Banner */}
