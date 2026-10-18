@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { HeroBanner } from './HeroBanner';
 import { CategoryScroll } from './CategoryScroll';
+import { FeaturedProductCarousel } from './FeaturedProductCarousel';
 import { ProductCard } from './ProductCard';
 import { TrustSection } from './TrustSection';
 import { Footer } from './Footer';
@@ -89,6 +90,11 @@ export const StoreView: React.FC = () => {
       <div className="hidden md:block">
         <CategoryScroll />
       </div>
+
+      {/* Featured Products Auto-Rotating Carousel (Normal Document Flow) */}
+      {!searchQuery && selectedCategory === 'all' && (
+        <FeaturedProductCarousel />
+      )}
 
       {/* 3. Dedicated Active Category Spotlight Banner (when filtered) */}
       {activeCategoryInfo && !searchQuery && (
