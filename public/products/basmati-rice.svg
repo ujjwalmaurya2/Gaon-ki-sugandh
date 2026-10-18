@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <!-- Seamless Pure White Studio Background -->
+  <rect width="600" height="600" fill="#FFFFFF"/>
+  
+  <defs>
+    <!-- Soft Contact Shadow -->
+    <radialGradient id="riceGroundShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stopColor="#000000" stopOpacity="0.22"/>
+      <stop offset="50%" stopColor="#000000" stopOpacity="0.08"/>
+      <stop offset="100%" stopColor="#000000" stopOpacity="0"/>
+    </radialGradient>
+    
+    <!-- Royal Bag Gradient -->
+    <linearGradient id="riceBagGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stopColor="#F7F3E8"/>
+      <stop offset="25%" stopColor="#FFFFFF"/>
+      <stop offset="75%" stopColor="#EFE8D6"/>
+      <stop offset="100%" stopColor="#D8CDAF"/>
+    </linearGradient>
+
+    <linearGradient id="goldBanner" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#F8CB46"/>
+      <stop offset="50%" stopColor="#E5A611"/>
+      <stop offset="100%" stopColor="#B37D00"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ground Shadow -->
+  <ellipse cx="300" cy="535" rx="170" ry="22" fill="url(#riceGroundShadow)"/>
+
+  <!-- Basmati Rice Bag -->
+  <!-- Bag Top stitched fold -->
+  <path d="M190 130 C240 120, 360 120, 410 130 L400 155 C350 148, 250 148, 200 155 Z" fill="#D98A00"/>
+  <line x1="200" y1="142" x2="400" y2="142" stroke="#FFFFFF" stroke-dasharray="5 4" stroke-width="2"/>
+
+  <!-- Bag Main Body -->
+  <path d="M195 145 C180 250, 175 420, 185 520 C220 530, 380 530, 415 520 C425 420, 420 250, 405 145 Z" fill="url(#riceBagGrad)" stroke="#C4B89A" stroke-width="2"/>
+
+  <!-- Royal Blue & Gold Header on Bag -->
+  <path d="M190 180 C230 172, 370 172, 410 180 L413 250 C370 242, 230 242, 187 250 Z" fill="#0C831F"/>
+  <rect x="187" y="246" width="226" height="6" fill="url(#goldBanner)"/>
+
+  <text x="300" y="206" text-anchor="middle" fill="#F8CB46" font-family="Arial, sans-serif" font-weight="900" font-size="16" letter-spacing="3">GAON KI SUGANDH</text>
+  <text x="300" y="232" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-weight="800" font-size="20" letter-spacing="1">HIMALAYAN BASMATI</text>
+
+  <!-- Aged 2 Years Emblem -->
+  <circle cx="300" cy="285" r="26" fill="url(#goldBanner)" stroke="#FFFFFF" stroke-width="2"/>
+  <text x="300" y="280" text-anchor="middle" fill="#000000" font-family="Arial, sans-serif" font-weight="900" font-size="11">AGED</text>
+  <text x="300" y="295" text-anchor="middle" fill="#000000" font-family="Arial, sans-serif" font-weight="900" font-size="14">2 YRS</text>
+
+  <!-- Clear Preview Window showing Extra Long Slender Grains -->
+  <rect x="220" y="330" width="160" height="110" rx="14" fill="#000000" fill-opacity="0.06" stroke="#C4B89A" stroke-width="2"/>
+  <rect x="222" y="332" width="156" height="106" rx="12" fill="#FAF8F2"/>
+  
+  <!-- Realistic Rice Grains in Window -->
+  <g fill="#FFFFFF" stroke="#D5CFBE" stroke-width="1">
+    <ellipse cx="250" cy="355" rx="14" ry="4" transform="rotate(-15 250 355)"/>
+    <ellipse cx="280" cy="352" rx="16" ry="4.2" transform="rotate(20 280 352)"/>
+    <ellipse cx="320" cy="356" rx="15" ry="3.8" transform="rotate(-10 320 356)"/>
+    <ellipse cx="350" cy="360" rx="14" ry="4" transform="rotate(35 350 360)"/>
+    <ellipse cx="240" cy="385" rx="15" ry="4.2" transform="rotate(25 240 385)"/>
+    <ellipse cx="275" cy="382" rx="16" ry="4" transform="rotate(-20 275 382)"/>
+    <ellipse cx="310" cy="380" rx="15.5" ry="4.1" transform="rotate(10 310 380)"/>
+    <ellipse cx="345" cy="388" rx="14.5" ry="4" transform="rotate(-15 345 388)"/>
+    <ellipse cx="260" cy="415" rx="15" ry="4" transform="rotate(-10 260 415)"/>
+    <ellipse cx="295" cy="412" rx="16.5" ry="4.2" transform="rotate(15 295 412)"/>
+    <ellipse cx="330" cy="416" rx="15" ry="4" transform="rotate(-30 330 416)"/>
+  </g>
+
+  <!-- Bottom Details -->
+  <text x="300" y="475" text-anchor="middle" fill="#0C831F" font-family="Arial, sans-serif" font-weight="900" font-size="14" letter-spacing="1">TRADITIONAL ROYAL BASMATI</text>
+  <text x="300" y="495" text-anchor="middle" fill="#666666" font-family="Arial, sans-serif" font-weight="700" font-size="12">Dehradun Valley • Extra Long Grain • Net Wt. 5 kg</text>
+
+  <!-- Green Veg Logo -->
+  <rect x="210" y="465" width="20" height="20" stroke="#0C831F" stroke-width="2" fill="#FFFFFF"/>
+  <circle cx="220" cy="475" r="5" fill="#0C831F"/>
+</svg>
