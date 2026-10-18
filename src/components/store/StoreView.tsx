@@ -81,7 +81,7 @@ export const StoreView: React.FC = () => {
   }, [products]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col w-full max-w-full min-w-0">
       {/* 1. Blinkit Green & Yellow Hero Banner */}
       <HeroBanner />
 

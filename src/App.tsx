@@ -16,7 +16,7 @@ const MainApp: React.FC = () => {
   const { activeView } = useStore();
 
   return (
-    <div className="min-h-screen bg-brand-bg text-brand-dark flex flex-col font-sans selection:bg-brand-yellow selection:text-brand-dark">
+    <div className="min-h-screen bg-brand-bg text-brand-dark flex flex-col font-sans selection:bg-brand-yellow selection:text-brand-dark w-full max-w-full overflow-x-clip">
       <ToastContainer />
 
       {activeView === 'admin' ? (
@@ -24,7 +24,7 @@ const MainApp: React.FC = () => {
       ) : (
         <>
           <Header />
-          <main className="flex-1">
+          <main className="flex-1 w-full max-w-full min-w-0">
             <StoreView />
           </main>
           <FloatingCartBar />

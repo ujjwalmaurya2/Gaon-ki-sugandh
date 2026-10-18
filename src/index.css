@@ -18,6 +18,11 @@
   scrollbar-width: none;
 }
 
+/* Smooth touch scrolling */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Custom smooth animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
