@@ -1,6 +1,7 @@
 import React from 'react';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { Header } from './components/common/Header';
+import { AppIntroAnimation } from './components/common/AppIntroAnimation';
 import { BottomNav } from './components/common/BottomNav';
 import { FloatingCartBar } from './components/common/FloatingCartBar';
 import { CartDrawer } from './components/common/CartDrawer';
@@ -17,6 +18,7 @@ const MainApp: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-brand-bg text-brand-dark flex flex-col font-sans selection:bg-brand-yellow selection:text-brand-dark w-full max-w-full overflow-x-clip">
+      <AppIntroAnimation />
       <ToastContainer />
 
       {activeView === 'admin' ? (
