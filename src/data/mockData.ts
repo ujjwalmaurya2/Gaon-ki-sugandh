@@ -1,4 +1,4 @@
-import { Category, Product, Coupon, StoreSettings, Order } from '../types';
+import { Category, Product, Coupon, StoreSettings, Order, OfflineSale, BumperOffer } from '../types';
 
 export const CATEGORIES: Category[] = [
   {
@@ -742,3 +742,199 @@ export const INITIAL_ORDERS: Order[] = [
     deliveryEstimateMinutes: 0
   }
 ];
+
+export const INITIAL_OFFLINE_SALES: OfflineSale[] = [
+  {
+    id: 'POS-10492',
+    createdAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+    customerName: 'Rameshwar Dayal',
+    customerPhone: '9811234567',
+    items: [
+      {
+        productId: 'gks-oil-01',
+        productName: 'Kacchi Ghani Mustard Oil (Cold-Pressed)',
+        variantId: 'v-mustard-1l',
+        variantName: '1 Litre',
+        sellingPrice: 249,
+        unitPrice: 249,
+        totalPrice: 498,
+        mrp: 299,
+        quantity: 2,
+        image: '/products/mustard-oil.jpg',
+        category: 'oils'
+      },
+      {
+        productId: 'gks-atta-01',
+        productName: 'MP Sharbati Whole Wheat Chakki Atta',
+        variantId: 'v-atta-5kg',
+        variantName: '5 kg Bag',
+        sellingPrice: 285,
+        unitPrice: 285,
+        totalPrice: 285,
+        mrp: 330,
+        quantity: 1,
+        image: '/products/wheat-atta.jpg',
+        category: 'atta'
+      }
+    ],
+    subtotal: 783,
+    discount: 33,
+    totalAmount: 750,
+    paymentMethod: 'UPI / QR (Online)',
+    paymentStatus: 'Paid (Simulated)',
+    orderSource: 'Offline / POS',
+    referenceId: 'UPI-DEMO-981245'
+  },
+  {
+    id: 'POS-10491',
+    createdAt: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
+    customerName: 'Walk-in Customer',
+    items: [
+      {
+        productId: 'gks-dairy-01',
+        productName: 'A2 Vedic Gir Cow Cultured Bilona Ghee',
+        variantId: 'v-ghee-500ml',
+        variantName: '500 ml Glass Jar',
+        sellingPrice: 790,
+        unitPrice: 790,
+        totalPrice: 790,
+        mrp: 950,
+        quantity: 1,
+        image: '/products/desi-ghee.svg',
+        category: 'dairy'
+      }
+    ],
+    subtotal: 790,
+    discount: 0,
+    totalAmount: 790,
+    paymentMethod: 'UPI / QR (Online)',
+    paymentStatus: 'Paid (Simulated)',
+    orderSource: 'Offline / POS',
+    referenceId: 'UPI-DEMO-819230'
+  },
+  {
+    id: 'POS-10490',
+    createdAt: new Date(Date.now() - 280 * 60 * 1000).toISOString(),
+    customerName: 'Anita Gupta',
+    customerPhone: '9871239870',
+    items: [
+      {
+        productId: 'gks-spice-01',
+        productName: 'High Curcumin Lakadong Turmeric Powder',
+        variantId: 'v-turmeric-250g',
+        variantName: '250 g Zipper',
+        sellingPrice: 145,
+        unitPrice: 145,
+        totalPrice: 290,
+        mrp: 180,
+        quantity: 2,
+        image: '/products/turmeric.jpg',
+        category: 'spices'
+      },
+      {
+        productId: 'gks-ess-02',
+        productName: 'Raw Unprocessed Wild Forest Honey',
+        variantId: 'v-honey-350g',
+        variantName: '350 g Glass Jar',
+        sellingPrice: 260,
+        unitPrice: 260,
+        totalPrice: 260,
+        mrp: 320,
+        quantity: 1,
+        image: '/products/wild-honey.svg',
+        category: 'essentials'
+      }
+    ],
+    subtotal: 550,
+    discount: 50,
+    totalAmount: 500,
+    paymentMethod: 'UPI / QR (Online)',
+    paymentStatus: 'Paid (Simulated)',
+    orderSource: 'Offline / POS',
+    referenceId: 'UPI-DEMO-726194'
+  }
+];
+
+export const INITIAL_OFFERS: BumperOffer[] = [
+  {
+    id: 'OFFER-HARVEST-25',
+    title: 'Organic Harvest Bumper Sale',
+    subtitle: 'Flat 25% OFF on pure wood-churned mustard oils & stone-ground Sharbati atta.',
+    description: 'Flat 25% OFF on pure wood-churned mustard oils & stone-ground Sharbati atta. 100% farm certified.',
+    bannerImage: '/products/mustard-oil.jpg',
+    bannerGradient: 'from-emerald-700 via-emerald-600 to-green-700',
+    offerType: 'percent',
+    discountValue: 25,
+    minCartValue: 499,
+    minOrderValue: 499,
+    applicableCategories: ['oils', 'atta'],
+    startDate: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    endDate: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    status: 'active',
+    badgeText: 'BUMPER OFFER',
+    ctaLabel: 'Shop Oils & Atta',
+    targetCategory: 'oils',
+    isSpotlight: true
+  },
+  {
+    id: 'OFFER-STAPLES-100',
+    title: 'Everyday Essentials Mega Deal',
+    subtitle: 'Save flat ₹100 on unpolished desi toor dal & aged Himalayan Royal Basmati Rice.',
+    description: 'Save flat ₹100 on unpolished desi toor dal & aged Himalayan Royal Basmati Rice.',
+    bannerImage: '/products/toor-dal.jpg',
+    bannerGradient: 'from-amber-600 via-yellow-600 to-amber-700',
+    offerType: 'flat',
+    discountValue: 100,
+    minCartValue: 599,
+    minOrderValue: 599,
+    applicableCategories: ['dal', 'rice'],
+    startDate: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    endDate: new Date(Date.now() + 20 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    status: 'active',
+    badgeText: 'FESTIVE DEAL',
+    ctaLabel: 'Shop Village Staples',
+    targetCategory: 'dal',
+    isSpotlight: true
+  },
+  {
+    id: 'OFFER-VEDIC-GHEE-20',
+    title: 'Vedic A2 Ghee & Raw Honey Special',
+    subtitle: 'Special 20% festive discount on pure Gir Cow Bilona Ghee and Sundarbans forest honey.',
+    description: 'Special 20% festive discount on pure Gir Cow Bilona Ghee and Sundarbans forest honey.',
+    bannerImage: '/products/desi-ghee.svg',
+    bannerGradient: 'from-yellow-700 via-amber-600 to-orange-700',
+    offerType: 'percent',
+    discountValue: 20,
+    minCartValue: 999,
+    minOrderValue: 999,
+    applicableCategories: ['dairy', 'essentials'],
+    startDate: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    endDate: new Date(Date.now() + 15 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    status: 'active',
+    badgeText: 'LIMITED TIME DEAL',
+    ctaLabel: 'Claim Vedic Deal',
+    targetCategory: 'dairy',
+    isSpotlight: true
+  },
+  {
+    id: 'OFFER-WINTER-SPICE',
+    title: 'Winter Immunity Spices Offer',
+    subtitle: 'Extra 15% OFF on Meghalaya Lakadong Turmeric and cold stone-pounded pure spices.',
+    description: 'Extra 15% OFF on Meghalaya Lakadong Turmeric and cold stone-pounded pure spices.',
+    bannerImage: '/products/turmeric.jpg',
+    bannerGradient: 'from-orange-700 via-red-600 to-amber-700',
+    offerType: 'percent',
+    discountValue: 15,
+    minCartValue: 350,
+    minOrderValue: 350,
+    applicableCategories: ['spices'],
+    startDate: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    endDate: new Date(Date.now() + 45 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+    status: 'scheduled',
+    badgeText: 'COMING SOON',
+    ctaLabel: 'Preview Spices',
+    targetCategory: 'spices',
+    isSpotlight: false
+  }
+];
+

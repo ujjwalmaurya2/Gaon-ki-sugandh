@@ -10,11 +10,14 @@ import {
   Clock, 
   CheckCircle2, 
   XCircle,
-  Eye
+  Eye,
+  Receipt,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 
 export const DashboardTab: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
-  const { orders, products, setTrackingOrderId } = useStore();
+  const { orders, products, setTrackingOrderId, offlineSales, offers } = useStore();
 
   // Metrics calculation
   const totalOrders = orders.length;
@@ -129,6 +132,57 @@ export const DashboardTab: React.FC<{ onNavigate: (tab: string) => void }> = ({ 
               <ArrowUpRight className="w-3 h-3" />
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Quick Access Banners for Demo Features */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        {/* POS Quick Access */}
+        <div 
+          onClick={() => onNavigate('pos')}
+          className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-50 via-white to-emerald-50 border border-brand-green/30 shadow-xs hover:border-brand-green hover:shadow-md cursor-pointer transition-all flex items-center justify-between gap-3 group"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-brand-green text-white flex items-center justify-center font-black shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-black text-brand-dark">Offline Sales & Quick POS</h4>
+                <span className="px-1.5 py-0.2 rounded bg-brand-greenLight text-brand-green text-[10px] font-black uppercase">
+                  {offlineSales.length} bills
+                </span>
+              </div>
+              <p className="text-[11px] text-brand-muted mt-0.5">
+                Instant counter billing, simulated UPI QR code payments & printed tax receipts.
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-brand-green shrink-0 group-hover:translate-x-1 transition-transform" />
+        </div>
+
+        {/* Bumper Offers Quick Access */}
+        <div 
+          onClick={() => onNavigate('offers')}
+          className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-amber-50 via-white to-yellow-50 border border-amber-300/50 shadow-xs hover:border-amber-500 hover:shadow-md cursor-pointer transition-all flex items-center justify-between gap-3 group"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-brand-yellow text-brand-dark flex items-center justify-center font-black shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-black text-brand-dark">Bumper Offers & Promotions</h4>
+                <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 text-[10px] font-black uppercase">
+                  {offers.filter(o => o.status === 'active').length} live
+                </span>
+              </div>
+              <p className="text-[11px] text-brand-muted mt-0.5">
+                Manage promotional banners, category percentage discounts & storefront spotlights.
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-amber-700 shrink-0 group-hover:translate-x-1 transition-transform" />
         </div>
       </div>
 

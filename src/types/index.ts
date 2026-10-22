@@ -23,6 +23,8 @@ export interface ProductVariant {
   sellingPrice: number;
   mrp: number;
   stock: number;
+  discountPercent?: number; // Configured manual discount % (e.g. 50, 30, 10)
+  showDiscountBadge?: boolean;
 }
 
 export interface Product {
@@ -168,3 +170,57 @@ export interface StoreSettings {
   promoBannerCode: string;
   demoWhatsAppNumber: string;
 }
+
+export interface OfflineSaleItem {
+  productId: string;
+  productName: string;
+  variantId: string;
+  variantName: string;
+  sellingPrice: number;
+  unitPrice: number;
+  totalPrice?: number;
+  mrp: number;
+  quantity: number;
+  image?: string;
+  category?: CategoryId;
+}
+
+export interface OfflineSale {
+  id: string; // e.g. "POS-8421"
+  createdAt: string; // ISO string
+  customerName: string; // "Walk-in Customer" or entered name
+  customerPhone?: string;
+  customerAddress?: string;
+  notes?: string;
+  items: OfflineSaleItem[];
+  subtotal: number;
+  discount: number;
+  totalAmount: number;
+  paymentMethod: 'UPI / QR (Online)' | 'Cash' | 'Card' | string;
+  paymentStatus: 'Paid (Simulated)' | 'Pending';
+  orderSource: 'Offline / POS';
+  referenceId?: string; // Simulated UPI ref e.g. "UPI-DEMO-94812"
+}
+
+export interface BumperOffer {
+  id: string; // e.g. "OFFER-01"
+  title: string;
+  subtitle?: string;
+  description?: string;
+  bannerImage?: string;
+  bannerGradient?: string;
+  offerType: 'percentage' | 'fixed' | 'special_price' | 'percent' | 'flat' | 'bogo' | 'bundle';
+  discountValue: number; // e.g. 25 (%) or 100 (₹)
+  minCartValue?: number;
+  minOrderValue?: number;
+  applicableProductIds?: string[];
+  applicableCategories?: (CategoryId | 'all')[];
+  startDate: string; // ISO date string or YYYY-MM-DD
+  endDate: string;
+  status: 'draft' | 'scheduled' | 'active' | 'paused' | 'inactive';
+  badgeText: string; // e.g. "BUMPER OFFER", "LIMITED TIME DEAL"
+  ctaLabel: string; // e.g. "Shop Offer"
+  targetCategory?: CategoryId | 'all';
+  isSpotlight?: boolean;
+}
+

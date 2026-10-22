@@ -15,7 +15,8 @@ import {
   Package, 
   Image as ImageIcon,
   AlertCircle,
-  Type
+  Type,
+  Sparkles
 } from 'lucide-react';
 
 export const ProductsTab: React.FC = () => {
@@ -70,12 +71,20 @@ export const ProductsTab: React.FC = () => {
       category: 'oils',
       origin: 'Rajasthan / MP',
       description: '100% pure organic village harvest.',
-      image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=600&auto=format&fit=crop&q=80',
+      image: '/products/cold_pressed_mustard_oil.jpg',
       isFeatured: false,
       isAvailable: true,
       lowStockThreshold: 10,
       variants: [
-        { id: `v-${Date.now()}`, name: '1 Litre', sku: `GKS-NEW-${Math.floor(100+Math.random()*900)}`, sellingPrice: 250, mrp: 300, stock: 30 }
+        {
+          id: `v-${Date.now()}`,
+          name: '1 Litre',
+          sku: `GKS-NEW-${Math.floor(100+Math.random()*900)}`,
+          sellingPrice: 200,
+          discountPercent: 50,
+          mrp: 400,
+          stock: 30
+        }
       ]
     });
     setEditingProduct(null);
@@ -93,7 +102,15 @@ export const ProductsTab: React.FC = () => {
       isFeatured: p.isFeatured,
       isAvailable: p.isAvailable,
       lowStockThreshold: p.lowStockThreshold,
-      variants: [...p.variants]
+      variants: p.variants.map((v) => {
+        const computedDiscount = v.discountPercent !== undefined
+          ? v.discountPercent
+          : (v.mrp > v.sellingPrice ? Math.round(((v.mrp - v.sellingPrice) / v.mrp) * 100) : 0);
+        return {
+          ...v,
+          discountPercent: computedDiscount,
+        };
+      })
     });
     setEditingProduct(p);
     setIsAddingNew(false);
@@ -171,11 +188,28 @@ export const ProductsTab: React.FC = () => {
           name: '500 ml',
           sku: `GKS-VAR-${Math.floor(100+Math.random()*900)}`,
           sellingPrice: 150,
-          mrp: 180,
+          discountPercent: 20,
+          mrp: Math.round(150 / (1 - 0.20)), // 188
           stock: 20
         }
       ]
     });
+  };
+
+  const updateVariantPricing = (index: number, newSellingPrice: number, newDiscountPercent: number) => {
+    const updated = [...formData.variants];
+    const safeDiscount = Math.min(99, Math.max(0, newDiscountPercent));
+    const autoMrp = safeDiscount > 0
+      ? Math.round(newSellingPrice / (1 - safeDiscount / 100))
+      : newSellingPrice;
+
+    updated[index] = {
+      ...updated[index],
+      sellingPrice: newSellingPrice,
+      discountPercent: safeDiscount,
+      mrp: autoMrp,
+    };
+    setFormData({ ...formData, variants: updated });
   };
 
   const updateVariantField = (index: number, key: keyof ProductVariant, value: any) => {
@@ -364,13 +398,27 @@ export const ProductsTab: React.FC = () => {
                     {/* Variants */}
                     <td className="py-3 px-4">
                       <div className="space-y-1">
-                        {p.variants.map((v) => (
-                          <div key={v.id} className="text-[11px] flex items-center gap-2">
-                            <span className="font-bold text-brand-dark">{v.name}:</span>
-                            <span className="font-black text-brand-green">₹{v.sellingPrice}</span>
-                            <span className="line-through text-brand-lightMuted text-[10px]">₹{v.mrp}</span>
-                          </div>
-                        ))}
+                        {p.variants.map((v) => {
+                          const discount = v.discountPercent !== undefined && v.discountPercent > 0
+                            ? v.discountPercent
+                            : (v.mrp > v.sellingPrice ? Math.round(((v.mrp - v.sellingPrice) / v.mrp) * 100) : 0);
+                          const hasDiscount = discount > 0 && v.mrp > v.sellingPrice;
+
+                          return (
+                            <div key={v.id} className="text-[11px] flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-brand-dark">{v.name}:</span>
+                              <span className="font-black text-brand-green">₹{v.sellingPrice}</span>
+                              {hasDiscount && (
+                                <>
+                                  <span className="line-through text-brand-lightMuted text-[10px]">₹{v.mrp}</span>
+                                  <span className="text-[9px] font-extrabold text-amber-700 bg-amber-50 px-1 py-0.2 rounded border border-amber-200">
+                                    {discount}% OFF
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </td>
 
@@ -572,57 +620,127 @@ export const ProductsTab: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="space-y-2">
-                  {formData.variants.map((v, idx) => (
-                    <div key={v.id || idx} className="grid grid-cols-12 gap-2 items-center bg-white p-2.5 rounded-xl border border-brand-border">
-                      <div className="col-span-3">
-                        <label className="text-[10px] text-brand-muted block font-semibold">Size</label>
-                        <input
-                          type="text"
-                          value={v.name}
-                          onChange={(e) => updateVariantField(idx, 'name', e.target.value)}
-                          placeholder="1 L / 5 kg"
-                          className="w-full px-2 py-1 border border-brand-border rounded-lg text-xs font-bold outline-none"
-                        />
+                <div className="space-y-3">
+                  {formData.variants.map((v, idx) => {
+                    const discount = v.discountPercent !== undefined
+                      ? v.discountPercent
+                      : (v.mrp > v.sellingPrice ? Math.round(((v.mrp - v.sellingPrice) / v.mrp) * 100) : 0);
+                    const savings = Math.max(0, v.mrp - v.sellingPrice);
+
+                    return (
+                      <div key={v.id || idx} className="bg-white p-3 rounded-xl border border-brand-border space-y-2.5 shadow-2xs">
+                        <div className="grid grid-cols-12 gap-2 items-center">
+                          {/* Size */}
+                          <div className="col-span-3">
+                            <label className="text-[10px] text-brand-muted block font-semibold">Size / Unit</label>
+                            <input
+                              type="text"
+                              value={v.name}
+                              onChange={(e) => updateVariantField(idx, 'name', e.target.value)}
+                              placeholder="1 L / 5 kg"
+                              className="w-full px-2 py-1.5 border border-brand-border rounded-lg text-xs font-bold outline-none focus:border-brand-green"
+                            />
+                          </div>
+
+                          {/* Selling Price */}
+                          <div className="col-span-3">
+                            <label className="text-[10px] text-brand-muted block font-semibold">Selling Price ₹ *</label>
+                            <input
+                              type="number"
+                              min={1}
+                              value={v.sellingPrice}
+                              onChange={(e) => {
+                                const sp = parseInt(e.target.value) || 0;
+                                updateVariantPricing(idx, sp, discount);
+                              }}
+                              className="w-full px-2 py-1.5 border border-brand-border rounded-lg text-xs font-black text-brand-green outline-none focus:border-brand-green"
+                            />
+                          </div>
+
+                          {/* Discount % */}
+                          <div className="col-span-2">
+                            <label className="text-[10px] text-brand-muted block font-semibold">Discount %</label>
+                            <input
+                              type="number"
+                              min={0}
+                              max={99}
+                              value={discount}
+                              onChange={(e) => {
+                                const d = Math.min(99, Math.max(0, parseInt(e.target.value) || 0));
+                                updateVariantPricing(idx, v.sellingPrice, d);
+                              }}
+                              className="w-full px-2 py-1.5 border border-brand-border rounded-lg text-xs font-bold text-amber-700 outline-none focus:border-brand-green"
+                            />
+                          </div>
+
+                          {/* Auto-Calculated MRP */}
+                          <div className="col-span-3">
+                            <label className="text-[10px] text-brand-muted block font-semibold flex items-center gap-1">
+                              <span>MRP ₹</span>
+                              <span className="text-[9px] text-brand-green font-bold">(Auto)</span>
+                            </label>
+                            <input
+                              type="number"
+                              min={v.sellingPrice}
+                              value={v.mrp}
+                              onChange={(e) => {
+                                const newMrp = parseInt(e.target.value) || v.sellingPrice;
+                                const newDisc = newMrp > v.sellingPrice ? Math.round(((newMrp - v.sellingPrice) / newMrp) * 100) : 0;
+                                const updated = [...formData.variants];
+                                updated[idx] = {
+                                  ...updated[idx],
+                                  mrp: newMrp,
+                                  discountPercent: newDisc,
+                                };
+                                setFormData({ ...formData, variants: updated });
+                              }}
+                              className="w-full px-2 py-1.5 border border-brand-border rounded-lg text-xs font-semibold bg-gray-50 outline-none"
+                            />
+                          </div>
+
+                          {/* Delete */}
+                          <div className="col-span-1 text-center pt-3">
+                            <button
+                              type="button"
+                              onClick={() => removeVariantField(idx)}
+                              className="text-red-500 hover:text-red-700 p-1"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Stock & Realtime Formula explanation pill */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-[11px] pt-1.5 border-t border-brand-border/40">
+                          <div className="flex items-center gap-1.5">
+                            <label className="text-brand-muted font-semibold text-[10px]">Stock Qty:</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={v.stock}
+                              onChange={(e) => updateVariantField(idx, 'stock', parseInt(e.target.value) || 0)}
+                              className="w-20 px-2 py-0.5 border border-brand-border rounded text-xs font-bold"
+                            />
+                          </div>
+
+                          <div>
+                            {discount > 0 ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold text-[10px] border border-emerald-200">
+                                <Sparkles className="w-3 h-3 text-brand-green shrink-0" />
+                                <span>
+                                  ₹{v.sellingPrice} ÷ (1 - {discount}%) = <strong>₹{v.mrp} MRP</strong> · Customer saves ₹{savings} ({discount}% OFF)
+                                </span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-brand-muted font-medium">
+                                Normal Price (0% OFF) · Selling Price = MRP = ₹{v.sellingPrice}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="col-span-3">
-                        <label className="text-[10px] text-brand-muted block font-semibold">Selling ₹</label>
-                        <input
-                          type="number"
-                          value={v.sellingPrice}
-                          onChange={(e) => updateVariantField(idx, 'sellingPrice', parseInt(e.target.value) || 0)}
-                          className="w-full px-2 py-1 border border-brand-border rounded-lg text-xs font-bold text-brand-green outline-none"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="text-[10px] text-brand-muted block font-semibold">MRP ₹</label>
-                        <input
-                          type="number"
-                          value={v.mrp}
-                          onChange={(e) => updateVariantField(idx, 'mrp', parseInt(e.target.value) || 0)}
-                          className="w-full px-2 py-1 border border-brand-border rounded-lg text-xs outline-none"
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <label className="text-[10px] text-brand-muted block font-semibold">Stock Qty</label>
-                        <input
-                          type="number"
-                          value={v.stock}
-                          onChange={(e) => updateVariantField(idx, 'stock', parseInt(e.target.value) || 0)}
-                          className="w-full px-2 py-1 border border-brand-border rounded-lg text-xs font-bold outline-none"
-                        />
-                      </div>
-                      <div className="col-span-1 text-center pt-3">
-                        <button
-                          type="button"
-                          onClick={() => removeVariantField(idx)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 

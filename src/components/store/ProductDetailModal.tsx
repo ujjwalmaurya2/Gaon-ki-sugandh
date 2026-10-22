@@ -38,9 +38,11 @@ export const ProductDetailModal: React.FC = () => {
   );
   const cartQty = cartItem ? cartItem.quantity : 0;
 
-  const discountPercent = currentVariant.mrp > currentVariant.sellingPrice
-    ? Math.round(((currentVariant.mrp - currentVariant.sellingPrice) / currentVariant.mrp) * 100)
-    : 0;
+  const discountPercent = currentVariant.discountPercent !== undefined
+    ? currentVariant.discountPercent
+    : (currentVariant.mrp > currentVariant.sellingPrice
+        ? Math.round(((currentVariant.mrp - currentVariant.sellingPrice) / currentVariant.mrp) * 100)
+        : 0);
 
   const isOutOfStock = currentVariant.stock <= 0;
 

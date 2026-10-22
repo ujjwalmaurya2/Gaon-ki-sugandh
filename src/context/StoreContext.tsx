@@ -10,13 +10,17 @@ import {
   StoreSettings, 
   InventoryMovementLog, 
   WhatsAppNotification,
-  CategoryId
+  CategoryId,
+  OfflineSale,
+  BumperOffer
 } from '../types';
 import { 
   INITIAL_PRODUCTS, 
   INITIAL_COUPONS, 
   INITIAL_SETTINGS, 
-  INITIAL_ORDERS 
+  INITIAL_ORDERS,
+  INITIAL_OFFLINE_SALES,
+  INITIAL_OFFERS
 } from '../data/mockData';
 import { 
   parseNavFromQuery, 
@@ -107,6 +111,19 @@ interface StoreContextType {
   lastPlacedOrder: Order | null;
   setLastPlacedOrder: (order: Order | null) => void;
 
+  // Offline / POS Sales
+  offlineSales: OfflineSale[];
+  createOfflineSale: (saleData: Omit<OfflineSale, 'id' | 'createdAt'>) => OfflineSale;
+
+  // Bumper Offers & Promotions
+  offers: BumperOffer[];
+  addOffer: (offer: Omit<BumperOffer, 'id'>) => void;
+  updateOffer: (offer: BumperOffer) => void;
+  deleteOffer: (id: string) => void;
+  toggleOfferStatus: (id: string, status: BumperOffer['status']) => void;
+  activeOfferFilter: string | null;
+  setActiveOfferFilter: (offerId: string | null) => void;
+
   // Toast
   toasts: ToastMessage[];
   showToast: (message: string, type?: 'success' | 'warning' | 'error' | 'info') => void;
@@ -119,6 +136,8 @@ const STORAGE_KEYS = {
   PRODUCTS: 'gks_products_v1',
   CART: 'gks_cart_v1',
   ORDERS: 'gks_orders_v1',
+  OFFLINE_SALES: 'gks_offline_sales_v1',
+  OFFERS: 'gks_offers_v1',
   INVENTORY_LOGS: 'gks_inv_logs_v1',
   COUPONS: 'gks_coupons_v1',
   SETTINGS: 'gks_settings_v1',
@@ -220,7 +239,31 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : { address: 'DLF Phase 1, Sector 28', pincode: '122002' };
   });
 
-  // 9. Navigation & Modals UI state (initialized synchronously from URL query parameters)
+  // 9. Offline / POS Sales
+  const [offlineSales, setOfflineSales] = useState<OfflineSale[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.OFFLINE_SALES);
+    if (!saved) return INITIAL_OFFLINE_SALES;
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return INITIAL_OFFLINE_SALES;
+    }
+  });
+
+  // 10. Bumper Offers & Promotions
+  const [offers, setOffers] = useState<BumperOffer[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.OFFERS);
+    if (!saved) return INITIAL_OFFERS;
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return INITIAL_OFFERS;
+    }
+  });
+
+  const [activeOfferFilter, setActiveOfferFilter] = useState<string | null>(null);
+
+  // 11. Navigation & Modals UI state (initialized synchronously from URL query parameters)
   const initialNav = useRef(parseNavFromQuery(window.location.search)).current;
 
   const [activeView, setActiveViewState] = useState<'store' | 'admin'>(initialNav.view);
@@ -794,6 +837,61 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem(STORAGE_KEYS.LOCATION, JSON.stringify(deliveryLocation));
   }, [deliveryLocation]);
 
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.OFFLINE_SALES, JSON.stringify(offlineSales));
+  }, [offlineSales]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.OFFERS, JSON.stringify(offers));
+  }, [offers]);
+
+  // Offline / POS Sales Handlers
+  const createOfflineSale = (saleData: Omit<OfflineSale, 'id' | 'createdAt'>): OfflineSale => {
+    const saleId = `POS-${Math.floor(10000 + Math.random() * 90000)}`;
+    const newSale: OfflineSale = {
+      ...saleData,
+      id: saleId,
+      createdAt: new Date().toISOString(),
+      paymentStatus: 'Paid (Simulated)',
+      orderSource: 'Offline / POS',
+      referenceId: saleData.referenceId || `UPI-DEMO-${Math.floor(100000 + Math.random() * 900000)}`
+    };
+
+    // Deduct stock for all items sold in POS
+    newSale.items.forEach((item) => {
+      adjustStock(item.productId, item.variantId, -item.quantity, 'Demo Order Deduction');
+    });
+
+    setOfflineSales((prev) => [newSale, ...prev]);
+    showToast(`⚡ POS Bill #${saleId} completed & paid!`, 'success');
+    return newSale;
+  };
+
+  // Bumper Offers Handlers
+  const addOffer = (offerData: Omit<BumperOffer, 'id'>) => {
+    const newId = `OFFER-${Date.now().toString().slice(-4)}`;
+    const newOffer: BumperOffer = { ...offerData, id: newId };
+    setOffers((prev) => [newOffer, ...prev]);
+    showToast(`Created offer campaign "${newOffer.title}"`, 'success');
+  };
+
+  const updateOffer = (updated: BumperOffer) => {
+    setOffers((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+    showToast(`Updated offer "${updated.title}"`, 'success');
+  };
+
+  const deleteOffer = (id: string) => {
+    const existing = offers.find((o) => o.id === id);
+    setOffers((prev) => prev.filter((o) => o.id !== id));
+    if (activeOfferFilter === id) setActiveOfferFilter(null);
+    showToast(`Deleted offer "${existing?.title || id}"`, 'info');
+  };
+
+  const toggleOfferStatus = (id: string, status: BumperOffer['status']) => {
+    setOffers((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+    showToast(`Offer status set to ${status.toUpperCase()}`, 'info');
+  };
+
   // Product helpers
   const getProductById = (id: string) => products.find((p) => p.id === id);
 
@@ -1264,6 +1362,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.removeItem(STORAGE_KEYS.SETTINGS);
     localStorage.removeItem(STORAGE_KEYS.NOTIFICATIONS);
     localStorage.removeItem(STORAGE_KEYS.LOCATION);
+    localStorage.removeItem(STORAGE_KEYS.OFFLINE_SALES);
+    localStorage.removeItem(STORAGE_KEYS.OFFERS);
 
     setProducts(INITIAL_PRODUCTS);
     setCart([]);
@@ -1273,6 +1373,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setNotifications([]);
     setAppliedCoupon(null);
     setDeliveryLocation({ address: 'DLF Phase 1, Sector 28', pincode: '122002' });
+    setOfflineSales(INITIAL_OFFLINE_SALES);
+    setOffers(INITIAL_OFFERS);
+    setActiveOfferFilter(null);
     setInventoryLogs([
       {
         id: 'log-seed-1',
@@ -1330,6 +1433,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setDeliveryLocation,
         isPincodeServiceable,
         navigateBack,
+        offlineSales,
+        createOfflineSale,
+        offers,
+        addOffer,
+        updateOffer,
+        deleteOffer,
+        toggleOfferStatus,
+        activeOfferFilter,
+        setActiveOfferFilter,
         activeView,
         setActiveView,
         selectedCategory,

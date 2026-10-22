@@ -3,6 +3,7 @@ import { useStore } from '../../context/StoreContext';
 import { HeroBanner } from './HeroBanner';
 import { CategoryScroll } from './CategoryScroll';
 import { FeaturedProductCarousel } from './FeaturedProductCarousel';
+import { StoreOffersSection } from './StoreOffersSection';
 import { ProductCard } from './ProductCard';
 import { TrustSection } from './TrustSection';
 import { Footer } from './Footer';
@@ -22,11 +23,19 @@ export const StoreView: React.FC = () => {
     selectedCategory, 
     setSelectedCategory, 
     searchQuery, 
-    setSearchQuery 
+    setSearchQuery,
+    offers,
+    activeOfferFilter,
+    setActiveOfferFilter
   } = useStore();
 
   const [sortBy, setSortBy] = useState<'popularity' | 'price-asc' | 'price-desc' | 'rating'>('popularity');
   const [inStockOnly, setInStockOnly] = useState(false);
+
+  // Active Offer Details
+  const activeOffer = useMemo(() => {
+    return offers.find((o) => o.id === activeOfferFilter) || null;
+  }, [offers, activeOfferFilter]);
 
   // Active Category details
   const activeCategoryInfo = useMemo(() => {
@@ -43,6 +52,17 @@ export const StoreView: React.FC = () => {
       // Category filter
       if (selectedCategory !== 'all' && prod.category !== selectedCategory) {
         return false;
+      }
+
+      // Active Offer filter
+      if (activeOffer) {
+        if (
+          activeOffer.applicableCategories &&
+          activeOffer.applicableCategories.length > 0 &&
+          !activeOffer.applicableCategories.includes('all' as any)
+        ) {
+          if (!activeOffer.applicableCategories.includes(prod.category)) return false;
+        }
       }
 
       // In-stock filter
@@ -74,7 +94,7 @@ export const StoreView: React.FC = () => {
       if (sortBy === 'rating') return b.rating - a.rating;
       return b.ratingCount - a.ratingCount; // popularity
     });
-  }, [products, selectedCategory, searchQuery, inStockOnly, sortBy]);
+  }, [products, selectedCategory, searchQuery, inStockOnly, sortBy, activeOffer]);
 
   // Best Sellers collection
   const bestSellers = useMemo(() => {
@@ -94,6 +114,56 @@ export const StoreView: React.FC = () => {
       {/* Featured Products Auto-Rotating Carousel (Normal Document Flow) */}
       {!searchQuery && selectedCategory === 'all' && (
         <FeaturedProductCarousel />
+      )}
+
+      {/* Bumper Offers & Farm Deals Section */}
+      {!searchQuery && (
+        <StoreOffersSection />
+      )}
+
+      {/* Active Offer Spotlight Banner (when filtered by an offer) */}
+      {activeOffer && !searchQuery && (
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-1 pb-3 w-full">
+          <div
+            className={`p-4 sm:p-5 rounded-3xl bg-gradient-to-r ${
+              activeOffer.bannerGradient || 'from-emerald-700 via-emerald-600 to-green-700'
+            } text-white shadow-md flex items-center justify-between gap-4`}
+          >
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-xl shrink-0">
+                🎁
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-brand-yellow text-brand-dark shadow-xs">
+                    {activeOffer.badgeText}
+                  </span>
+                  <span className="text-xs font-black text-white/95">
+                    {activeOffer.offerType === 'percent'
+                      ? `${activeOffer.discountValue}% OFF`
+                      : activeOffer.offerType === 'flat'
+                      ? `FLAT ₹${activeOffer.discountValue} OFF`
+                      : `${activeOffer.discountValue}% SAVINGS`}
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-xl font-black mt-0.5 tracking-tight">
+                  {activeOffer.title}
+                </h3>
+                <p className="text-xs text-white/90 line-clamp-1 max-w-xl font-medium">
+                  {activeOffer.subtitle}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setActiveOfferFilter(null)}
+              className="px-3.5 py-1.5 bg-white text-brand-dark hover:bg-yellow-50 rounded-xl text-xs font-black shrink-0 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+            >
+              <span>View All Products</span>
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* 3. Dedicated Active Category Spotlight Banner (when filtered) */}
@@ -138,6 +208,8 @@ export const StoreView: React.FC = () => {
               <span>
                 {searchQuery 
                   ? `Search Results for "${searchQuery}"` 
+                  : activeOffer
+                  ? `Bumper Deal: ${activeOffer.title}`
                   : selectedCategory === 'all' 
                   ? 'Everyday Organic Essentials' 
                   : `${activeCategoryInfo?.name || selectedCategory.toUpperCase()} Selection`}

@@ -30,9 +30,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const cartQty = cartItem ? cartItem.quantity : 0;
 
   // Calculate discount percentage
-  const discountPercent = currentVariant.mrp > currentVariant.sellingPrice
-    ? Math.round(((currentVariant.mrp - currentVariant.sellingPrice) / currentVariant.mrp) * 100)
-    : 0;
+  const discountPercent = currentVariant.discountPercent !== undefined
+    ? currentVariant.discountPercent
+    : (currentVariant.mrp > currentVariant.sellingPrice
+        ? Math.round(((currentVariant.mrp - currentVariant.sellingPrice) / currentVariant.mrp) * 100)
+        : 0);
 
   const isOutOfStock = currentVariant.stock <= 0;
   const isLowStock = currentVariant.stock > 0 && currentVariant.stock <= product.lowStockThreshold;

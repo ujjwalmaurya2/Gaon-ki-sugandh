@@ -7,6 +7,8 @@ import { InventoryTab } from './InventoryTab';
 import { CouponsTab } from './CouponsTab';
 import { WhatsAppTab } from './WhatsAppTab';
 import { SettingsTab } from './SettingsTab';
+import { PosTab } from './PosTab';
+import { OffersTab } from './OffersTab';
 import { 
   LayoutDashboard, 
   ShoppingBag, 
@@ -21,11 +23,12 @@ import {
   X,
   ShieldCheck,
   Store,
-  Sparkles
+  Sparkles,
+  Receipt
 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
-  const { setActiveView, resetAllDemoData, settings, orders, products } = useStore();
+  const { setActiveView, resetAllDemoData, settings, orders, products, offers, offlineSales } = useStore();
 
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -35,13 +38,29 @@ export const AdminLayout: React.FC = () => {
     return p.variants.some((v) => v.stock <= p.lowStockThreshold) ? count + 1 : count;
   }, 0);
 
+  const activeOffersCount = offers.filter((o) => o.status === 'active').length;
+
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { 
+      id: 'pos', 
+      label: 'Offline Sales / POS', 
+      icon: <Receipt className="w-4 h-4" />,
+      badge: offlineSales.length > 0 ? `${offlineSales.length}` : undefined,
+      badgeColor: 'bg-emerald-500 text-white'
+    },
+    { 
       id: 'orders', 
-      label: 'Orders', 
+      label: 'Online Orders', 
       icon: <ShoppingBag className="w-4 h-4" />,
       badge: orders.length > 0 ? orders.length : undefined
+    },
+    { 
+      id: 'offers', 
+      label: 'Bumper Offers', 
+      icon: <Sparkles className="w-4 h-4" />,
+      badge: activeOffersCount > 0 ? `${activeOffersCount} Live` : undefined,
+      badgeColor: 'bg-amber-500 text-white'
     },
     { id: 'products', label: 'Products', icon: <Package className="w-4 h-4" /> },
     { 
@@ -218,7 +237,9 @@ export const AdminLayout: React.FC = () => {
         {/* Active Tab View */}
         <main className="flex-1 min-w-0">
           {activeTab === 'dashboard' && <DashboardTab onNavigate={(tab) => setActiveTab(tab)} />}
+          {activeTab === 'pos' && <PosTab />}
           {activeTab === 'orders' && <OrdersTab />}
+          {activeTab === 'offers' && <OffersTab />}
           {activeTab === 'products' && <ProductsTab />}
           {activeTab === 'inventory' && <InventoryTab />}
           {activeTab === 'coupons' && <CouponsTab />}
